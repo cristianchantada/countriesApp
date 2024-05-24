@@ -1,42 +1,50 @@
-import { Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { Subject, debounceTime } from 'rxjs';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, output } from '@angular/core';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 
 @Component({
   selector: 'shared-search-box',
   templateUrl: './search-box.component.html',
   styles: ``
 })
-export class SearchBoxComponent implements OnInit {
+export class SearchBoxComponent implements OnInit, OnDestroy {
 
-  private debouncer: Subject<string> = new Subject<string>();
+	private debouncer: Subject<string> = new Subject<string>();
+	private debouncerSuscripcion?: Subscription;
 
-  @Input()
-  public placeholder: string = ''
+	@Input()
+	public placeholder: string = '';
 
-  @ViewChild('txtInput')
-  public capitalInput!: ElementRef<HTMLInputElement>;
+	@Input()
+	public initialValue:string = '';
 
-  @Output()
-  public onValue: EventEmitter<string> = new EventEmitter();
+	@ViewChild('txtInput')
+	public capitalInput!: ElementRef<HTMLInputElement>;
 
-  @Output()
-  public onDebounce: EventEmitter<string> = new EventEmitter();
+	@Output()
+	public onValue: EventEmitter<string> = new EventEmitter();
 
-  ngOnInit(): void {
-    this.debouncer.pipe(
-      debounceTime(300)
-    )
-    .subscribe( value =>{
-      this.onDebounce.emit(value);
-    })
-  }
+	@Output()
+	public onDebounce: EventEmitter<string> = new EventEmitter();
 
-  emitValue(capital: string): void{
-    this.onValue.emit(capital);
-  }
+	ngOnInit(): void {
+		this.debouncerSuscripcion = this.debouncer.pipe(
+		debounceTime(300)
+		)
+		.subscribe( value =>{
+		this.onDebounce.emit(value);
+		})
+	}
 
-  onKeyPress(searchTerm: string){
-    this.debouncer.next(searchTerm);
-  }
+	emitValue(capital: string): void{
+		this.onValue.emit(capital);
+	}
+
+	onKeyPress(searchTerm: string){
+		this.debouncer.next(searchTerm);
+	}
+
+	ngOnDestroy(): void {
+		this.debouncerSuscripcion?.unsubscribe();
+	}
 
 }
